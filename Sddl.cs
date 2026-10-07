@@ -60,6 +60,9 @@ public class Sddl : IEquatable<Sddl> {
         Group = match.Groups["group"].Success ? Trustee.Construct(match.Groups["group"].Value) : null;
         if (match.Groups["dacl_list"].Success) {
             foreach (Capture capture in match.Groups["dacl_flags"].Captures) {
+                if (string.IsNullOrWhiteSpace(capture.Value)) {
+                    continue;
+                }
                 Regex daclflag = new(string.Join("|", MetaExtensions.GetAllAbbr<SddlAclFlags>()));
                 MatchCollection daclMatches = daclflag.Matches(capture.Value);
                 foreach (Match daclMatch in daclMatches) {
@@ -90,6 +93,9 @@ public class Sddl : IEquatable<Sddl> {
         }
         if (match.Groups["sacl_list"].Success) {
             foreach (Capture capture in match.Groups["sacl_flags"].Captures) {
+                if (string.IsNullOrWhiteSpace(capture.Value)) {
+                    continue;
+                }
                 if (!MetaExtensions.TryGetMetaAbbr(capture.Value, out SddlAclFlags saclFlag)) {
                     throw new ArgumentException("Invalid SACL flag");
                 }
