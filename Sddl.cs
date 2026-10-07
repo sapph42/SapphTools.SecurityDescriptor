@@ -1,4 +1,3 @@
-﻿using SapphTools.SecurityDescriptor.Classes;
 using System.Security.AccessControl;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -11,8 +10,10 @@ public class Sddl : IEquatable<Sddl> {
     private Regex? _acePattern;
 
     [JsonInclude]
+    [JsonPropertyName(nameof(SddlString))]
     public string SddlString => ToString();
     [JsonInclude]
+    [JsonPropertyName("SddlType")]
     public ObjectType Type { get; private set; }
 
     [JsonIgnore]
