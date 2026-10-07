@@ -33,6 +33,17 @@ public class Sddl {
     [JsonIgnore]
     public List<Ace>? SaclAces { get; private set; }
 
+    [JsonIgnore]
+    public AccessControlSections ActiveSections {
+        get {
+            return AccessControlSections.None |
+                (Owner is not null ? AccessControlSections.Owner : AccessControlSections.None) |
+                (Group is not null ? AccessControlSections.Group : AccessControlSections.None) |
+                (DaclFlags is not null || DaclAces is not null ? AccessControlSections.Access : AccessControlSections.None) |
+                (SaclFlags is not null || SaclAces is not null ? AccessControlSections.Audit : AccessControlSections.None);
+        }
+    }
+
     static Sddl() {
         TrusteePattern = $@"S[0-9-]+|(?:{string.Join("|", MetaExtensions.GetAllAbbr<SidString>())})";
     }
