@@ -64,6 +64,9 @@ public class Right : IEquatable<Right> {
         }
         return (uint)sddlRights;
     }
+    public Right Clone() {
+        return new(Value);
+    }
     public bool Equals(Right? other) {
         if (other is null) {
             return false;

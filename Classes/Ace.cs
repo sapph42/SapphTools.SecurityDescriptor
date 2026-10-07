@@ -63,6 +63,9 @@ public class Ace : IEquatable<Ace> {
         return ace.ToString();
     }
 
+    public Ace Clone() {
+        return new(Type, Flags, Right.Clone(), ObjectType, ObjectInheritType, Trustee.Clone());
+    }
     public bool Equals(Ace? other) {
         if (other is null) {
             return false;
