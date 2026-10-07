@@ -1,11 +1,41 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Reflection;
+using SapphTools.SecurityDescriptor.Attributes;
 using SapphTools.SecurityDescriptor.Classes;
 using SapphTools.SecurityDescriptor.Enums;
+using SapphTools.SecurityDescriptor.Extensions;
 
 namespace SapphTools.SecurityDescriptor.Tests;
 
 [TestClass]
 public class SddlRightTests {
+    [TestMethod]
+    public void NamedDescriptionsPreserveEachOriginalEnumFieldsMetadata() {
+        int checkedRights = 0;
+        // Read fields directly: enum values cannot distinguish CC/NW or KR/KX.
+        foreach (FieldInfo field in typeof(SddlRights).GetFields(BindingFlags.Public | BindingFlags.Static)) {
+            RightMetaAttribute? meta = field.GetCustomAttribute<RightMetaAttribute>();
+            if (meta is null) {
+                continue;
+            }
+            SddlRightValue right = SddlRightValue.ByAbbreviation[meta.Abbr];
+            Assert.AreEqual(meta.Description, right.Description, field.Name);
+            Assert.AreEqual(meta.Description, right.GetDescription(), field.Name);
+            checkedRights++;
+        }
+        Assert.AreEqual(28, checkedRights);
+    }
+
+    [TestMethod]
+    public void DescriptionsAreAvailableThroughTypedFactoriesAndCatalogs() {
+        Assert.AreEqual("No write up", SddlRightValue.Construct<MandatoryRight>("NW").Description);
+        Assert.AreEqual("Create child objects", SddlRightValue.Construct<DirectoryRight>("CC").Description);
+        foreach (ObjectType type in Enum.GetValues<ObjectType>()) {
+            Assert.AreEqual("None", SddlRightValue.Construct(string.Empty, type)!.Description);
+            Assert.AreEqual("Special", SddlRightValue.Construct(0xDEADBEEFu, type)!.Description);
+        }
+    }
+
     [TestMethod]
     public void CatalogContainsEveryDomainBeforeDomainSpecificLookup() {
         Assert.AreEqual(6, SddlRightValue.ByTypeAndVal.Count);
@@ -226,6 +256,7 @@ public class SddlRightTests {
         Assert.IsNotNull(right);
         Assert.AreEqual(mask, right.Value);
         Assert.IsNull(right.Abbr);
+        Assert.AreEqual("Special", right.Description);
         Assert.AreEqual($"0x{mask:X8}", right.ToString());
     }
 }
