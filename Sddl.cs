@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 
 namespace SapphTools.SecurityDescriptor;
-public class Sddl {
+public class Sddl : IEquatable<Sddl> {
     private readonly static string TrusteePattern = @"S[0-9-]+|[A-Z]{2}";
     private const string GuidPattern = @"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{12}";
     private Regex? _acePattern;
@@ -165,6 +165,82 @@ public class Sddl {
         };
         objSecurity.SetSecurityDescriptorSddlForm(ToString());
         return objSecurity;
+    }
+    public override bool Equals(object? obj) {
+        return Equals(obj as Sddl);
+    }
+    public bool Equals(Sddl? other) => Equals(other, false);
+    public bool Equals(Sddl? other, bool compareActiveOnly = false) {
+        if (ReferenceEquals(this, other)) {
+            return true;
+        }
+        if (other is null) {
+            return false;
+        }
+        if (!compareActiveOnly && ActiveSections != other.ActiveSections) {
+            return false;
+        }
+        if (ActiveSections.HasFlag(AccessControlSections.Owner)) {
+            if (!Owner!.Equals(other.Owner)) {
+                return false;
+            }
+        }
+        if (ActiveSections.HasFlag(AccessControlSections.Group)) {
+            if (!Group!.Equals(other.Group)) {
+                return false;
+            }
+        }
+        if (ActiveSections.HasFlag(AccessControlSections.Access)) {
+            if (!DaclFlags.Equals(other.DaclFlags)) {
+                return false;
+            }
+            if (!ReferenceEquals(DaclAces, other.DaclAces)) {
+                if (DaclAces is not null && other.DaclAces is not null && !Enumerable.SequenceEqual(DaclAces, other.DaclAces)) {
+                    return false;
+                }
+                if (DaclAces is null || other.DaclAces is null) {
+                    return false;
+                }
+            }
+        }
+        if (ActiveSections.HasFlag(AccessControlSections.Audit)) {
+            if (!SaclFlags.Equals(other.SaclFlags)) {
+                return false;
+            }
+            if (!ReferenceEquals(SaclAces, other.SaclAces)) {
+                if (SaclAces is not null && other.SaclAces is not null && !Enumerable.SequenceEqual(SaclAces, other.SaclAces)) {
+                    return false;
+                }
+                if (SaclAces is null || other.SaclAces is null) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    public override int GetHashCode() {
+        HashCode hc = new();
+        hc.Add(Owner);
+        hc.Add(Group);
+        hc.Add(DaclFlags);
+        if (DaclAces is not null) {
+            foreach (Ace ace in DaclAces) {
+                hc.Add(ace);
+            }
+        }
+        if (DaclAces is not null) {
+            foreach (Ace ace in DaclAces) {
+                hc.Add(ace);
+            }
+        }
+        hc.Add(DaclAces);
+        if (SaclAces is not null) {
+            foreach (Ace ace in SaclAces) {
+                hc.Add(ace);
+            }
+        }
+        hc.Add(SaclAces);
+        return hc.ToHashCode();
     }
     public override string ToString() {
         StringBuilder sddl = new();
