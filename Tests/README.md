@@ -8,7 +8,12 @@ dotnet test Tests/SecurityDescriptor.Tests.csproj
 
 The tests cover the replacement rights model, including domain collisions, KR/KX
 token identity, immutable cached tables, typed factories, mixed-domain parsing,
-raw masks, strict input validation, and equality/hash consistency.
+raw masks, strict input validation, equality/hash consistency, and UI descriptions.
+
+Named values expose `Description` with the original enum field's UI text. The
+`GetDescription()` extension also accepts the new value objects. NONE values use
+"None"; raw masks use the existing "Special" fallback. Descriptions are metadata
+and do not participate in equality or hashing.
 
 The existing `Right`/`Ace` APIs still use the old enum; integrating the replacement
 into those APIs is a separate migration.

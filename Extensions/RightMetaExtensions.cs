@@ -1,5 +1,7 @@
 ﻿namespace SapphTools.SecurityDescriptor.Extensions;
 public static class RightExtensions {
+    public static string GetDescription(this SddlRightValue right) => right.Description;
+
     public static string GetDescription(this SddlRights enumVal) {
         RightMetaAttribute? meta = enumVal.GetAttributeOfType<RightMetaAttribute>() ?? 
             throw new InvalidOperationException("Enum value does not have a RightMetaAttribute");
