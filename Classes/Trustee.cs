@@ -35,6 +35,12 @@ public partial class Trustee : IEquatable<Trustee> {
         Sid = sid;
         DisplayString = GetDisplay();
     }
+    public Trustee Clone() {
+        return new(Sid) {
+            SddlSafe = SddlSafe,
+            NativeSid = NativeSid
+        };
+    }
     public string GetDisplay() {
         try {
             return new SecurityIdentifier(Sid).Translate(typeof(NTAccount)).Value;
