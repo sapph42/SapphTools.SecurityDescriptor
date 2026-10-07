@@ -151,6 +151,11 @@ public class Sddl : IEquatable<Sddl> {
         }
         DaclAces[oldIdx] = newAce;
     }
+    public DirectorySecurity ToDirectorySecurity() {
+        DirectorySecurity sec = new();
+        sec.SetSecurityDescriptorSddlForm(ToString(), ActiveSections);
+        return sec;
+    }
     public FileSecurity ToFileSecurity() {
         return (FileSecurity)ToObjectSecurity();
     }
@@ -163,7 +168,7 @@ public class Sddl : IEquatable<Sddl> {
             ObjectType.File => new FileSecurity(),
             _ => throw new NotImplementedException(),
         };
-        objSecurity.SetSecurityDescriptorSddlForm(ToString());
+        objSecurity.SetSecurityDescriptorSddlForm(ToString(), ActiveSections);
         return objSecurity;
     }
     public override bool Equals(object? obj) {
