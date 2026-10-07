@@ -92,6 +92,7 @@ public abstract class SddlRightValue : IEquatable<SddlRightValue> {
         return null;
     }
 
+    public abstract SddlRightValue Clone();
     public override bool Equals(object? obj) => Equals(obj as SddlRightValue);
     public bool Equals(SddlRightValue? other) =>
         other is not null && GetType() == other.GetType() && Value == other.Value &&
@@ -101,6 +102,7 @@ public abstract class SddlRightValue : IEquatable<SddlRightValue> {
 }
 
 public class SddlRight : IEquatable<SddlRight> {
+    private static readonly System.Buffers.SearchValues<char> HexChars = System.Buffers.SearchValues.Create("0123456789ABCDEFabcdef");
     protected readonly HashSet<SddlRightValue> Rights = [];
     private readonly uint? rawMask;
 
@@ -109,6 +111,13 @@ public class SddlRight : IEquatable<SddlRight> {
         rawMask = rights;
     }
 
+    public SddlRight Clone() {
+        SddlRight clone = new(rawMask ?? 0);
+        foreach (SddlRightValue value in Rights) {
+            clone.Rights.Add(value.Clone());
+        }
+        return clone;
+    }
     public uint ToValue() {
         uint val = rawMask ?? 0;
         foreach (SddlRightValue value in Rights) {
@@ -130,7 +139,7 @@ public class SddlRight : IEquatable<SddlRight> {
         }
         if (rights.StartsWith("0x", StringComparison.OrdinalIgnoreCase)) {
             ReadOnlySpan<char> hex = rights.AsSpan(2);
-            if (hex.IsEmpty || hex.Length > 8 || hex.IndexOfAnyExcept("0123456789ABCDEFabcdef") >= 0 ||
+            if (hex.IsEmpty || hex.Length > 8 || hex.IndexOfAnyExcept(HexChars) >= 0 ||
                 !uint.TryParse(hex, NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out uint mask)) {
                 throw new ArgumentException("An invalid hexadecimal rights mask was presented.", nameof(rights));
             }
@@ -149,9 +158,7 @@ public class SddlRight : IEquatable<SddlRight> {
         }
         return ret;
     }
-
     public static SddlRight Construct(uint rights) => new(rights);
-
     // Compatibility overloads: aggregate text may span multiple rights domains.
     public static SddlRight Construct<T>(string? rights) where T : SddlRightValue, ISddlRight<T> => Construct(rights);
     public static SddlRight Construct<T>(uint rights) where T : SddlRightValue, ISddlRight<T> => Construct(rights);
@@ -190,6 +197,7 @@ public class GenericRight : SddlRightValue, ISddlRight<GenericRight> {
     });
     public static ObjectType Type => ObjectType.Generic;
     protected GenericRight(uint value, string? abbr = null) : base(value, abbr) { }
+    public override SddlRightValue Clone() => new GenericRight(Value, Abbr);
     public static GenericRight Create(uint value) => new(value);
 }
 
@@ -215,6 +223,7 @@ public class StandardRight : SddlRightValue, ISddlRight<StandardRight> {
     });
     public static ObjectType Type => ObjectType.Standard;
     protected StandardRight(uint value, string? abbr = null) : base(value, abbr) { }
+    public override SddlRightValue Clone() => new StandardRight(Value, Abbr);
     public static StandardRight Create(uint value) => new(value);
 }
 
@@ -255,6 +264,7 @@ public class DirectoryRight : SddlRightValue, ISddlRight<DirectoryRight> {
     });
     public static ObjectType Type => ObjectType.DirectoryService;
     protected DirectoryRight(uint value, string? abbr = null) : base(value, abbr) { }
+    public override SddlRightValue Clone() => new DirectoryRight(Value, Abbr);
     public static DirectoryRight Create(uint value) => new(value);
 }
 
@@ -280,6 +290,7 @@ public class FileRight : SddlRightValue, ISddlRight<FileRight> {
     });
     public static ObjectType Type => ObjectType.File;
     protected FileRight(uint value, string? abbr = null) : base(value, abbr) { }
+    public override SddlRightValue Clone() => new FileRight(Value, Abbr);
     public static FileRight Create(uint value) => new(value);
 }
 
@@ -305,6 +316,7 @@ public class RegistryRight : SddlRightValue, ISddlRight<RegistryRight> {
     });
     public static ObjectType Type => ObjectType.RegistryKey;
     protected RegistryRight(uint value, string? abbr = null) : base(value, abbr) { }
+    public override SddlRightValue Clone() => new RegistryRight(Value, Abbr);
     public static RegistryRight Create(uint value) => new(value);
 }
 
@@ -327,5 +339,6 @@ public class MandatoryRight : SddlRightValue, ISddlRight<MandatoryRight> {
     });
     public static ObjectType Type => ObjectType.Mandatory;
     protected MandatoryRight(uint value, string? abbr = null) : base(value, abbr) { }
+    public override SddlRightValue Clone() => new MandatoryRight(Value, Abbr);
     public static MandatoryRight Create(uint value) => new(value);
 }

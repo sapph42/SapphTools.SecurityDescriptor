@@ -4,11 +4,11 @@ namespace SapphTools.SecurityDescriptor.Classes;
 public class Ace : IEquatable<Ace> {
     public SddlAceType Type { get; set; }
     public SddlAceFlags? Flags { get; set; }
-    public Right Right { get; set; }
+    public SddlRight Right { get; set; }
     public Guid? ObjectType { get; set; }
     public Guid? ObjectInheritType { get; set; }
     public Trustee Trustee { get; set; }
-    public Ace(SddlAceType ace, SddlAceFlags? flags, Right right, Guid? objectType, Guid? objectInheritType, Trustee trustee) {
+    public Ace(SddlAceType ace, SddlAceFlags? flags, SddlRight right, Guid? objectType, Guid? objectInheritType, Trustee trustee) {
         Type = ace;
         Flags = flags;
         Right = right;
@@ -16,7 +16,6 @@ public class Ace : IEquatable<Ace> {
         ObjectInheritType = objectInheritType;
         Trustee = trustee;
     }
-
     public Ace(string type, string flags, string rights, string? objectType, string? objectInheritType, string trustee) {
         if (!MetaExtensions.TryGetMetaAbbr(type, out SddlAceType aceType)) {
             throw new ArgumentException("Invalid ACE type");
@@ -34,7 +33,7 @@ public class Ace : IEquatable<Ace> {
                 Flags |= aceFlag;
             }
         }
-        Right = Right.Construct(rights);
+        Right = SddlRight.Construct(rights);
         _ = Guid.TryParse(objectType, out Guid o);
         ObjectType = o != Guid.Empty ? o : null;
         _ = Guid.TryParse(objectInheritType, out Guid oi);
