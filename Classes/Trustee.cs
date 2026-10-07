@@ -73,13 +73,6 @@ public partial class Trustee : IEquatable<Trustee> {
             _ => TrusteeDisplayType.Unknown
         };
     }
-    public static IEnumerable<string> EnumerateWellKnownPrincipals() {
-        foreach (SidString s in Enum.GetValues(typeof(SidString))) {
-            if (s.GetFull() is string name) { 
-                yield return name;
-            }
-        }
-    }
 
     public static Trustee Construct(SecurityIdentifier sid) {
         return new(sid.ToString()) {
@@ -117,6 +110,13 @@ public partial class Trustee : IEquatable<Trustee> {
             return Construct(securityIdentifier);
         } else {
             throw new ArgumentException("Invalid SID");
+        }
+    }
+    public static IEnumerable<string> EnumerateWellKnownPrincipals() {
+        foreach (SidString s in Enum.GetValues(typeof(SidString))) {
+            if (s.GetFull() is string name) {
+                yield return name;
+            }
         }
     }
     private static bool TryLookupSid(SecurityIdentifier sid, out string? accountName, out SidNameUse use) {
@@ -172,6 +172,15 @@ public partial class Trustee : IEquatable<Trustee> {
     }
     public override bool Equals(object? obj) {
         return Equals(obj as Trustee);
+    }
+    public static bool AreEqual(Trustee? trustee1, Trustee? trustee2) {
+        if (ReferenceEquals(trustee1, trustee2)) {
+            return true;
+        }
+        if (trustee1 is null || trustee2 is null) {
+            return false;
+        }
+        return trustee1.Equals(trustee2);
     }
     public override int GetHashCode() {
         if (TryParseSid(Sid, out SecurityIdentifier? thisSid)) {
