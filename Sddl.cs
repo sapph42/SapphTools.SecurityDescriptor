@@ -129,14 +129,22 @@ public class Sddl : IEquatable<Sddl> {
         DaclAces.Add(ace);
     }
     public Sddl Clone() {
+        List<Ace>? dacl = null;
+        List<Ace>? sacl = null;
+        if (DaclAces is not null) {
+            dacl = [..DaclAces.Select(a => a.Clone())];
+        }
+        if (SaclAces is not null) {
+            sacl = [.. SaclAces.Select(a => a.Clone())];
+        }
         return new() {
             Type = Type,
             Owner = Owner,
             Group = Group,
             DaclFlags = DaclFlags,
-            DaclAces = DaclAces,
+            DaclAces = dacl,
             SaclFlags = SaclFlags,
-            SaclAces = SaclAces
+            SaclAces = sacl
         };
     }
     public void RemoveDacl(Ace ace) {
