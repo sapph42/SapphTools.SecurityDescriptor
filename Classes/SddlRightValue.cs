@@ -114,7 +114,7 @@ public class SddlRight : IEquatable<SddlRight> {
     }
 
     public SddlRight Clone() {
-        SddlRight clone = new(rawMask ?? 0);
+        SddlRight clone = rawMask.HasValue ? new(rawMask.Value) : new();
         foreach (SddlRightValue value in Rights) {
             clone.Rights.Add(value.Clone());
         }
@@ -167,14 +167,8 @@ public class SddlRight : IEquatable<SddlRight> {
 
     public override bool Equals(object? obj) => Equals(obj as SddlRight);
     public bool Equals(SddlRight? other) =>
-        other is not null && GetType() == other.GetType() && rawMask == other.rawMask && Rights.SetEquals(other.Rights);
-    public override int GetHashCode() {
-        int rightsHash = 0;
-        foreach (SddlRightValue right in Rights) {
-            rightsHash = unchecked(rightsHash + right.GetHashCode());
-        }
-        return HashCode.Combine(GetType(), rawMask, Rights.Count, rightsHash);
-    }
+        other is not null && other is not null && ToValue() == other.ToValue();
+    public override int GetHashCode() => ToValue().GetHashCode();
 }
 
 public class GenericRight : SddlRightValue, ISddlRight<GenericRight> {
@@ -199,7 +193,8 @@ public class GenericRight : SddlRightValue, ISddlRight<GenericRight> {
     });
     public static ObjectType Type => ObjectType.Generic;
     protected GenericRight(uint value, string? abbr = null, string? description = null) : base(value, abbr, description) { }
-    public override SddlRightValue Clone() => new GenericRight(Value, Abbr);
+    public override SddlRightValue Clone() =>
+        new GenericRight(Value, Abbr, Description);
     public static GenericRight Create(uint value) => new(value);
 }
 
@@ -225,7 +220,8 @@ public class StandardRight : SddlRightValue, ISddlRight<StandardRight> {
     });
     public static ObjectType Type => ObjectType.Standard;
     protected StandardRight(uint value, string? abbr = null, string? description = null) : base(value, abbr, description) { }
-    public override SddlRightValue Clone() => new StandardRight(Value, Abbr);
+    public override SddlRightValue Clone() =>
+        new StandardRight(Value, Abbr, Description);
     public static StandardRight Create(uint value) => new(value);
 }
 
@@ -266,7 +262,8 @@ public class DirectoryRight : SddlRightValue, ISddlRight<DirectoryRight> {
     });
     public static ObjectType Type => ObjectType.DirectoryService;
     protected DirectoryRight(uint value, string? abbr = null, string? description = null) : base(value, abbr, description) { }
-    public override SddlRightValue Clone() => new DirectoryRight(Value, Abbr);
+    public override SddlRightValue Clone() =>
+        new DirectoryRight(Value, Abbr, Description);
     public static DirectoryRight Create(uint value) => new(value);
 }
 
@@ -292,7 +289,8 @@ public class FileRight : SddlRightValue, ISddlRight<FileRight> {
     });
     public static ObjectType Type => ObjectType.File;
     protected FileRight(uint value, string? abbr = null, string? description = null) : base(value, abbr, description) { }
-    public override SddlRightValue Clone() => new FileRight(Value, Abbr);
+    public override SddlRightValue Clone() =>
+        new FileRight(Value, Abbr, Description);
     public static FileRight Create(uint value) => new(value);
 }
 
@@ -318,7 +316,8 @@ public class RegistryRight : SddlRightValue, ISddlRight<RegistryRight> {
     });
     public static ObjectType Type => ObjectType.RegistryKey;
     protected RegistryRight(uint value, string? abbr = null, string? description = null) : base(value, abbr, description) { }
-    public override SddlRightValue Clone() => new RegistryRight(Value, Abbr);
+    public override SddlRightValue Clone() =>
+        new RegistryRight(Value, Abbr, Description);
     public static RegistryRight Create(uint value) => new(value);
 }
 
@@ -341,6 +340,7 @@ public class MandatoryRight : SddlRightValue, ISddlRight<MandatoryRight> {
     });
     public static ObjectType Type => ObjectType.Mandatory;
     protected MandatoryRight(uint value, string? abbr = null, string? description = null) : base(value, abbr, description) { }
-    public override SddlRightValue Clone() => new MandatoryRight(Value, Abbr);
+    public override SddlRightValue Clone() =>
+        new MandatoryRight(Value, Abbr, Description);
     public static MandatoryRight Create(uint value) => new(value);
 }
