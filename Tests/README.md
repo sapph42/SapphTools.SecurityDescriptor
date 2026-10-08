@@ -15,17 +15,17 @@ Named values expose `Description` with the original enum field's UI text. The
 "None"; raw masks use the existing "Special" fallback. Descriptions are metadata
 and do not participate in equality or hashing.
 
-The existing `Right`/`Ace` APIs still use the old enum; integrating the replacement
-into those APIs is a separate migration.
+`Ace.Right` now uses `SddlRight`; the old `Right` class has been retired.
 
 Text input preserves symbolic identity. Repeated tokens are deduplicated and
 formatted in ordinal abbreviation order. Numeric input stays hexadecimal, even
 when its value matches a named right. `ByVal` is a canonical metadata lookup, with
 KR chosen for the shared KR/KX mask; both spellings remain available in `ByAbbr`.
 `SddlRightValue` equality compares concrete type, mask, and abbreviation.
-`SddlRight` equality compares its token set or its raw mask, preserving the
-difference between symbolic and numeric input. Use `ToValue()` explicitly when
-comparing access masks alone.
+`SddlRight` equality and hashing compare the combined access mask, so equivalent
+symbolic and numeric representations compare equal. Equality does not rewrite
+the stored tokens or hexadecimal representation. Clone tests verify that both
+representations, domain identities, and UI descriptions survive copying.
 
 The non-generic aggregate parser accepts all supported abbreviations, including
 combinations of generic, standard, and object-specific rights. The generic

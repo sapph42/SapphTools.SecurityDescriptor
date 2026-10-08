@@ -102,7 +102,10 @@ public class SddlRightTests {
         Assert.AreSame(read, SddlRightValue.ByTypeAndVal[ObjectType.RegistryKey][read.Value]);
         Assert.AreEqual("KRKX", SddlRight.Construct("KRKX").ToString());
         Assert.AreEqual(read.Value, SddlRight.Construct("KRKX").ToValue());
-        Assert.IsFalse(SddlRight.Construct("KR").Equals(SddlRight.Construct("KX")));
+        SddlRight readMask = SddlRight.Construct("KR"), executeMask = SddlRight.Construct("KX");
+        Assert.IsTrue(readMask.Equals(executeMask));
+        Assert.AreEqual(readMask.GetHashCode(), executeMask.GetHashCode());
+        Assert.AreEqual(1, new HashSet<SddlRight> { readMask, executeMask }.Count);
     }
 
     [TestMethod]
@@ -229,18 +232,94 @@ public class SddlRightTests {
     }
 
     [TestMethod]
-    public void AggregateEqualityAndHashingAreOrderIndependentButPreserveTokenIdentity() {
+    public void AggregateEqualityAndHashingUseMasksRegardlessOfTokenOrderOrRepresentation() {
         SddlRight first = SddlRight.Construct("NWNRNX");
         SddlRight second = SddlRight.Construct("NXNRNW");
         Assert.IsTrue(first.Equals(second));
         Assert.AreEqual(first.GetHashCode(), second.GetHashCode());
         Assert.AreEqual(1, new HashSet<SddlRight> { first, second }.Count);
         Assert.IsTrue(SddlRight.Construct("NWNW").Equals(SddlRight.Construct("NW")));
-        Assert.IsFalse(SddlRight.Construct("NW").Equals(SddlRight.Construct("CC")));
-        Assert.IsFalse(SddlRight.Construct("NW").Equals(SddlRight.Construct(1u)));
-        Assert.IsFalse(SddlRight.Construct(0u).Equals(SddlRight.Construct(string.Empty)));
+        Assert.IsTrue(SddlRight.Construct("NW").Equals(SddlRight.Construct("CC")));
+        Assert.IsTrue(SddlRight.Construct("NW").Equals(SddlRight.Construct(1u)));
+        Assert.IsTrue(SddlRight.Construct(0u).Equals(SddlRight.Construct(string.Empty)));
+        Assert.IsFalse(SddlRight.Construct("NW").Equals(SddlRight.Construct("NR")));
         Assert.IsFalse(first.Equals(null));
         Assert.IsFalse(first.Equals(new object()));
+    }
+
+    [DataTestMethod]
+    [DataRow("", "0x00000000")]
+    [DataRow("NW", "0x00000001")]
+    [DataRow("CC", "NW")]
+    [DataRow("KR", "KX")]
+    [DataRow("FA", "0x001F01FF")]
+    [DataRow("GRGW", "0xC0000000")]
+    [DataRow("RCRP", "0x00020010")]
+    public void EqualAggregateMasksHaveEqualHashesAndDeduplicateInHashSets(string left, string right) {
+        SddlRight first = SddlRight.Construct(left), second = SddlRight.Construct(right);
+        Assert.IsTrue(first.Equals(second));
+        Assert.IsTrue(second.Equals(first));
+        Assert.IsTrue(first.Equals((object)second));
+        Assert.AreEqual(first.GetHashCode(), second.GetHashCode());
+        Assert.AreEqual(1, new HashSet<SddlRight> { first, second }.Count);
+        // Equality must not rewrite either operand's original representation.
+        Assert.AreEqual(SddlRight.Construct(left).ToString(), first.ToString());
+        Assert.AreEqual(SddlRight.Construct(right).ToString(), second.ToString());
+    }
+
+    [TestMethod]
+    public void AggregateEqualityDoesNotTreatAnAbsentRawMaskAsNumericZeroForNonzeroValues() {
+        SddlRight empty = SddlRight.Construct(string.Empty);
+        SddlRight one = SddlRight.Construct(1u), two = SddlRight.Construct(2u);
+        Assert.IsFalse(one.Equals(empty));
+        Assert.IsFalse(empty.Equals(one));
+        Assert.IsFalse(two.Equals(empty));
+        Assert.IsFalse(empty.Equals(two));
+        Assert.IsFalse(one.Equals(two));
+        SddlRight symbolic = SddlRight.Construct("NW"), hex = SddlRight.Construct("0x1");
+        Assert.IsTrue(one.Equals(symbolic) && symbolic.Equals(hex) && one.Equals(hex));
+    }
+
+    [DataTestMethod]
+    [DataRow("")]
+    [DataRow("GA")]
+    [DataRow("NW")]
+    [DataRow("KRKX")]
+    [DataRow("RCRP")]
+    [DataRow("0x00000000")]
+    [DataRow("0x001F01FF")]
+    [DataRow("0xFFFFFFFF")]
+    public void AggregateClonePreservesItsRepresentationMaskAndEquality(string input) {
+        SddlRight original = SddlRight.Construct(input), clone = original.Clone();
+        Assert.AreNotSame(original, clone);
+        Assert.AreEqual(original.ToString(), clone.ToString());
+        Assert.AreEqual(original.ToValue(), clone.ToValue());
+        Assert.IsTrue(original.Equals(clone));
+        Assert.IsTrue(clone.Equals(original));
+        Assert.AreEqual(original.GetHashCode(), clone.GetHashCode());
+    }
+
+    [TestMethod]
+    public void CloningIndividualRightsPreservesDescriptionsTokensAndDomains() {
+        foreach (var table in SddlRightValue.ByTypeAndAbbr.Values) {
+            foreach (SddlRightValue original in table.Values) {
+                SddlRightValue clone = original.Clone();
+                Assert.AreNotSame(original, clone);
+                Assert.AreEqual(original.GetType(), clone.GetType());
+                Assert.AreEqual(original.Value, clone.Value);
+                Assert.AreEqual(original.Abbr, clone.Abbr);
+                Assert.AreEqual(original.Description, clone.Description);
+                Assert.IsTrue(original.Equals(clone));
+                Assert.AreEqual(original.GetHashCode(), clone.GetHashCode());
+            }
+        }
+        foreach (ObjectType type in Enum.GetValues<ObjectType>()) {
+            SddlRightValue original = SddlRightValue.Construct(0xDEADBEEFu, type)!;
+            SddlRightValue clone = original.Clone();
+            Assert.IsNull(clone.Abbr);
+            Assert.AreEqual("Special", clone.Description);
+            Assert.IsTrue(original.Equals(clone));
+        }
     }
 
     [TestMethod]
