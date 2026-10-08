@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using SapphTools.SecurityDescriptor.Classes.Rights;
+using System.Text;
 
 namespace SapphTools.SecurityDescriptor.Classes;
 public class Ace : IEquatable<Ace> {

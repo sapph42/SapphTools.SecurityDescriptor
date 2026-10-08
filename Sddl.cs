@@ -1,4 +1,5 @@
-﻿using System.Security.AccessControl;
+﻿using SapphTools.SecurityDescriptor.Classes.Rights;
+using System.Security.AccessControl;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
