@@ -324,9 +324,9 @@ public class Sddl : IEquatable<Sddl> {
         return pattern.ToString();
     }
     private string BuildRightsString() {
-        var parts = RightExtensions.GetAllAbbr(ObjectType.Generic)
-            .Concat(RightExtensions.GetAllAbbr(ObjectType.Standard))
-            .Concat(RightExtensions.GetAllAbbr(Type));
+        var parts = GenericRight.ByAbbr.Keys
+            .Concat(StandardRight.ByAbbr.Keys)
+            .Concat(SddlRightValue.ByTypeAndAbbr[Type].Keys);
         return string.Join("|", parts);
     }
 }
